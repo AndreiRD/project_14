@@ -1,0 +1,27 @@
+{
+  "name": "project_14",
+  "version": "1.0.0",
+  "description": "Web-developer third back-end project featuring node.js, express and mongoDB. If you want to run project copy all the files, install npm, go to the directory in bash and type \"npm run start\".",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "devDependencies": {
+    "eslint": "^7.16.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "nodemon": "^2.0.6"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.11.9",
+    "validator": "^13.5.2"
+  }
+}
