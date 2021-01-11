@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const validator = require('validator');
+
 const bodyParser = require('body-parser');
 const auth = require('./middlewares/auth');
 
@@ -18,12 +18,12 @@ const { PORT = 3000 } = process.env;
 
 const app = express();
 
+app.use(bodyParser.json());
 app.post('/signup', postUser);
 app.post('/signin', login);
 
 app.use(auth);
 
-app.use(bodyParser.json());
 app.use('/users', router);
 app.use('/cards', cards);
 

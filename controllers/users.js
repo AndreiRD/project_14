@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
 
 module.exports.getUserById = (req, res) => {
   User.findById(req.params.id)
@@ -21,7 +22,8 @@ module.exports.getUsers = (req, res) => {
 
 module.exports.postUser = (req, res) => {
   const { name, about, avatar, email, password } = req.body;
-  User.create({ name, about, avatar, email, password: hash })
+  bcrypt.hash(req.body.password, 10)
+    .then(hash => User.create({ name, about, avatar, email, password: hash }))
     .then((user) => res.status(201).send({ data: user }))
     .catch(() => res.status(500).send({ message: 'Не удалось создать пользователя' }));
 };
