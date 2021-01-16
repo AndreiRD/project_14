@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -17,34 +18,47 @@ const userSchema = new mongoose.Schema({
   avatar: {
     type: String,
     required: true,
+    validate: {
+      validator: (link) => validator.isURL(link),
+      message: 'Некорректная ссылка',
+    },
   },
   email: {
     type: String,
     required: true,
     unique: true,
-    validate: (email) => validator.isEmail(email),
+    validate: {
+      validator: (email) => validator.isEmail(email),
+      message: 'Некорректный е-мейл',
+    },
   },
   password: {
     type: String,
     required: true,
-    select:false,
-  }
+    select: false,
+  },
 });
 
-userSchema.statics.findUserByCredentals = function (email, password) {
-  return this.findOne({ email })
-   .select('+password')
-   .then((user) => {
-     if (!user) {return Promise.reject(new Error('Неправильные почта или пароль'));}
-
-     return bcrypt.compare(password, user.password)
-      .then((matched) => {
-        if (!matched) {
-          return Promise.reject('Неправильные почта или пароль');
-        }
-        return user;
-      });
-    });
+userSchema.statics.checkIfEmailAvailable = function(email) {
+  this.findOne({email})
+   .then(() => {return false})
+   .catch(() => {return true})
 }
+
+userSchema.statics.findUserByCredentials = function (email, password) {
+  return this.findOne({ email })
+    .select('+password')
+    .then((user) => {
+      if (!user) { return Promise.reject(new Error('Неправильные почта или пароль')); }
+
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject('Неправильные почта или пароль');
+          }
+          return user;
+        });
+    });
+};
 
 module.exports = mongoose.model('user', userSchema);

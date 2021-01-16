@@ -1,44 +1,52 @@
-const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
+const User = require('../models/user');
+const { errHandler } = require('../middlewares/errhandler.js');
 
 module.exports.getUserById = (req, res) => {
-  User.findById(req.params.id)
-    .then((user) => {
-      if (!user) {
-        res.status(404).json({ message: 'Пользователь не найден' });
-      }
-      res.send({ data: user });
-    })
-    .catch(() => res.status(500).send({ message: 'Не удалось начать поиск пользователя' }));
+  if (validator.isMongoId(req.params.id.toString)) {
+    User.findById(req.params.id)
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'Пользователь не найден' });
+        }
+        res.send({ data: user });
+      })
+      .catch((err) => errHandler(err));
+  }
+  else {res.status(400).send({message: "Передан некорректный ID"})};
 };
 
 module.exports.getUsers = (req, res) => {
   User.find({})
     .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Не удалось выгрузить всех пользователей' }));
+    .catch((err) => errHandler(err));
 };
 
 module.exports.postUser = (req, res) => {
-  const { name, about, avatar, email, password } = req.body;
-  bcrypt.hash(req.body.password, 10)
-    .then(hash => User.create({ name, about, avatar, email, password: hash }))
-    .then((user) => res.status(201).send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Не удалось создать пользователя' }));
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  if (User.checkIfEmailAvailable(req.body.email)) {
+    bcrypt.hash(req.body.password, 10)
+      .then((hash) => User.create({
+        name, about, avatar, email, password: hash,
+      }))
+      .then((user) => res.status(201).send({ email: user.email, name: user.name, about: user.about, avatar: user.avatar }))
+      .catch((err) => errHandler(err));
+    }
+  else {res.status(409).send({message: "Пользователь с такой почтой уже есть"})}
 };
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
 
   return User.findUserByCredentials(email, password)
-      .then((user) => {
-          const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-          res.send({ token });
-      })
-      .catch((err) => {
-          res
-              .status(401)
-              .send({ message: err.message });
-      });
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch((err) => errHandler(err));
 };
