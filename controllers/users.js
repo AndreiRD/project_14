@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const bodyParser = require('body-parser');
+const validator = require('validator');
 const User = require('../models/user');
 const { errHandler } = require('../middlewares/errhandler.js');
 
@@ -11,11 +11,12 @@ module.exports.getUserById = (req, res) => {
         if (!user) {
           return res.status(404).json({ message: 'Пользователь не найден' });
         }
-        res.send({ data: user });
+        return res.send({ data: user });
       })
       .catch((err) => errHandler(err));
+  } else {
+    res.status(400).send({ message: 'Передан некорректный ID' });
   }
-  else {res.status(400).send({message: "Передан некорректный ID"})};
 };
 
 module.exports.getUsers = (req, res) => {
@@ -29,15 +30,16 @@ module.exports.postUser = (req, res) => {
     name, about, avatar, email, password,
   } = req.body;
 
-  if (User.checkIfEmailAvailable(req.body.email)) {
+  if (password && User.checkIfEmailAvailable(req.body.email)) {
     bcrypt.hash(req.body.password, 10)
       .then((hash) => User.create({
         name, about, avatar, email, password: hash,
       }))
-      .then((user) => res.status(201).send({ email: user.email, name: user.name, about: user.about, avatar: user.avatar }))
+      .then((user) => res.status(201).send({
+        email: user.email, name: user.name, about: user.about, avatar: user.avatar,
+      }))
       .catch((err) => errHandler(err));
-    }
-  else {res.status(409).send({message: "Пользователь с такой почтой уже есть"})}
+  } else { res.status(409).send({ message: 'Пользователь с такой почтой уже есть' }); }
 };
 
 module.exports.login = (req, res) => {

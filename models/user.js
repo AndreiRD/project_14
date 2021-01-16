@@ -39,13 +39,13 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.statics.checkIfEmailAvailable = function(email) {
-  this.findOne({email})
-   .then(() => {return false})
-   .catch(() => {return true})
-}
+userSchema.statics.checkIfEmailAvailable = function checkEmail(email) {
+  this.findOne({ email })
+    .then(() => false)
+    .catch(() => true);
+};
 
-userSchema.statics.findUserByCredentials = function (email, password) {
+userSchema.statics.findUserByCredentials = function findCredentials(email, password) {
   return this.findOne({ email })
     .select('+password')
     .then((user) => {
@@ -54,7 +54,7 @@ userSchema.statics.findUserByCredentials = function (email, password) {
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject('Неправильные почта или пароль');
+            return Promise.reject(new Error('Неправильные почта или пароль'));
           }
           return user;
         });

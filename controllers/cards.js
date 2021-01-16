@@ -1,5 +1,5 @@
-const Cards = require('../models/card');
 const validator = require('validator');
+const Cards = require('../models/card');
 const { errHandler } = require('../middlewares/errhandler.js');
 
 module.exports.getCards = (req, res) => {
@@ -17,20 +17,25 @@ module.exports.postCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   if (validator.isMongoId(req.params.id.toString)) {
-  Cards.findById(req.params.id).populate('owner')
-    .then((card) => {
-      if (!card) {
-        res.status(404).json({ message: 'Карта не найдена' });
-      }
-      if (card.owner.toString() !== req.user._id) {
-        res.status(401).send({ message: 'Карточка вам не принадлежит' });
-        return false;
-      }
-      Cards.findByIdAndRemove(req.params.id)
-        .then((obj) => res.send({ data: obj }))
-        .catch((err) => errHandler(err));
-    })
-    .catch(() => res.status(err.statusCode).send({ message: err.message }));
+    Cards.findById(req.params.id).populate('owner')
+      .then((card) => {
+        if (!card) {
+          res.status(404).json({ message: 'Карта не найдена' });
+          return false;
+        }
+        if (card.owner.toString() !== req.user._id) {
+          res.status(401).send({ message: 'Карточка вам не принадлежит' });
+          return false;
+        }
+        Cards.findByIdAndRemove(req.params.id)
+          .then((obj) => res.send({ data: obj }))
+          .catch((err) => errHandler(err));
+        return true;
+      })
+      .catch((err) => errHandler(err));
+  } else {
+    res.status(400).send({ message: 'Передан некорректный ID' });
+    return false;
   }
-  else {res.status(400).send({message: "Передан некорректный ID"})};
+  return false;
 };
