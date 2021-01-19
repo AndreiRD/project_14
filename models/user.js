@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const ApiError = require('../middlewares/apierror');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -39,26 +40,22 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-userSchema.statics.checkIfEmailAvailable = function checkEmail(email) {
-  this.findOne({ email })
-    .then(() => false)
-    .catch(() => true);
-};
-
-userSchema.statics.findUserByCredentials = function findCredentials(email, password) {
+userSchema.statics.findUserByCredentials = function findCredentials(email, password, res) {
   return this.findOne({ email })
     .select('+password')
     .then((user) => {
-      if (!user) { return Promise.reject(new Error('Неправильные почта или пароль')); }
+      if (!user) { return Promise.reject(new ApiError('Неправильные почта или пароль')); }
 
       return bcrypt.compare(password, user.password)
         .then((matched) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            return Promise.reject(new ApiError('Неправильные почта или пароль'));
           }
           return user;
-        });
-    });
+        })
+        .catch(() => res.status(401).send({ message: 'Неправильная почта или пароль' }));
+    })
+    .catch(() => res.status(401).send({ message: 'Неправильная почта или пароль' }));
 };
 
 module.exports = mongoose.model('user', userSchema);

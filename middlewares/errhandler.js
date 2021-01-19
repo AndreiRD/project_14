@@ -1,24 +1,44 @@
-module.exports.errorHandler = (err, res) => {
-  switch (err.prototype.name) {
+module.exports.errHandler = (err) => {
+  let message;
+  let statusCode;
+  const name = err && err.name;
+  switch (name) {
+    case 'MongoError':
+      if (err.code === 11000) {
+        statusCode = 409;
+        message = 'Запись с такими данными уже существует';
+        return [statusCode, message];
+      }
+      statusCode = 500;
+      message = 'Ошибка с базой данных';
+      return [statusCode, message];
     case 'MongooseError':
-      res.status(500).send({ message: 'Ошибка с базой данных' });
-      break;
+      statusCode = 500;
+      message = 'Ошибка с базой данных';
+      return [statusCode, message];
     case 'CastError':
-      res.status(401).send({ message: 'Неправильный тип данных в запросе' });
-      break;
+      statusCode = 401;
+      message = 'Неправильный тип данных в запросе';
+      return [statusCode, message];
     case 'DisconnectedError':
-      res.status(500).send({ message: 'Сброшено подключение к базе данных' });
-      break;
+      statusCode = 500;
+      message = 'Сброшено подключение к базе данных';
+      return [statusCode, message];
     case 'MissingSchemaError':
-      res.status(404).send({ message: 'Запрошенная модель не найдена' });
-      break;
+      statusCode = 404;
+      message = 'Запрошенная модель не найдена';
+      return [statusCode, message];
     case 'DocumentNotFoundError':
-      res.status(404).send({ message: 'Запрошенный документ не найден' });
-      break;
-    case 'ValidatorError':
-      res.status(400).send({ message: 'Некорректные данные в запросе' });
-      break;
+      statusCode = 404;
+      message = 'Запрошенный документ не найден';
+      return [statusCode, message];
+    case 'ValidationError':
+      statusCode = 400;
+      message = 'Некорректные данные в запросе';
+      return [statusCode, message];
     default:
-      res.status(500).send({ message: err.message });
+      statusCode = 500;
+      message = err.message || 'Произошла ошибка сервера';
+      return [statusCode, message];
   }
 };
