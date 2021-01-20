@@ -36,29 +36,35 @@ module.exports.postUser = (req, res) => {
     name, about, avatar, email, password,
   } = req.body;
 
-  bcrypt.hash(password, 10)
-    .then((hash) => User.create({
-      name, about, avatar, email, password: hash,
-    }))
-    .then((user) => res.status(201).send({
-      email: user.email, name: user.name, about: user.about, avatar: user.avatar,
-    }))
-    .catch((err) => {
-      const [statusCode, errorMessage] = errHandler(err);
-      res.status(statusCode).send({ message: errorMessage });
-    });
+  if (password) {
+    bcrypt.hash(password, 10)
+      .then((hash) => User.create({
+        name, about, avatar, email, password: hash,
+      }))
+      .then((user) => res.status(201).send({
+        email: user.email, name: user.name, about: user.about, avatar: user.avatar,
+      }))
+      .catch((err) => {
+        const [statusCode, errorMessage] = errHandler(err);
+        res.status(statusCode).send({ message: errorMessage });
+      });
+  } else { res.status(400).send({ message: 'Не хватает поля пароль' }); }
 };
 
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
 
-  return User.findUserByCredentials(email, password, res)
-    .then((user) => {
-      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-      res.send({ token });
-    })
-    .catch((err) => {
-      const [statusCode, errorMessage] = errHandler(err);
-      res.status(statusCode).send({ message: errorMessage });
-    });
+  if (password || email) {
+    return User.findUserByCredentials(email, password, res)
+      .then((user) => {
+        const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+        res.send({ token });
+      })
+      .catch((err) => {
+        const [statusCode, errorMessage] = errHandler(err);
+        res.status(statusCode).send({ message: errorMessage });
+      });
+  }
+
+  return res.status(400).send({ message: 'Не хватает поля в запросе ' });
 };

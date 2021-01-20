@@ -23,13 +23,13 @@ module.exports.postCard = (req, res) => {
 
 module.exports.deleteCard = (req, res) => {
   if (validator.isMongoId(req.params.id.toString())) {
-    Cards.findById(req.params).populate('owner')
+    Cards.findById(req.params.id.toString()).populate('owner')
       .then((card) => {
         if (!card) {
           res.status(404).json({ message: 'Карта не найдена' });
           return false;
         }
-        if (card.owner.toString() !== req.user._id) {
+        if (card.owner._id.toString() !== req.user._id) {
           res.status(403).send({ message: 'Карточка вам не принадлежит' });
           return false;
         }

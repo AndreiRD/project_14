@@ -17,7 +17,7 @@ module.exports.errHandler = (err) => {
       message = 'Ошибка с базой данных';
       return [statusCode, message];
     case 'CastError':
-      statusCode = 401;
+      statusCode = 400;
       message = 'Неправильный тип данных в запросе';
       return [statusCode, message];
     case 'DisconnectedError':
