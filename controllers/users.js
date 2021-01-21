@@ -54,7 +54,7 @@ module.exports.postUser = (req, res) => {
 module.exports.login = (req, res) => {
   const { email, password } = req.body;
 
-  if (password || email) {
+  if (password && email) {
     return User.findUserByCredentials(email, password, res)
       .then((user) => {
         const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
